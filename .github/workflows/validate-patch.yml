@@ -20,8 +20,15 @@ jobs:
       - run: npm ci && npm i -D @rollup/rollup-linux-x64-gnu
       - name: Production build (gate real del repo)
         run: npm run build
-      - name: Typecheck (informativo, comparar contra baseline)
+      - name: Typecheck a lista normalizada (archivo + codigo, sin posiciones)
         run: |
           npx tsc --noEmit > /tmp/tsc.log 2>&1 || true
-          echo "errores_totales=$(grep -c 'error TS' /tmp/tsc.log || true)"
-          echo "errores_monthly_view=$(grep -c 'monthly_view' /tmp/tsc.log || true)"
+          grep -oE '^[^(]+\([0-9]+,[0-9]+\): error TS[0-9]+' /tmp/tsc.log | sed -E 's/\([0-9]+,[0-9]+\)//' | sort > errors.txt
+          echo "errores_totales=$(wc -l < errors.txt)"
+          echo "sha256_lista=$(sha256sum errors.txt | cut -d' ' -f1)"
+      - name: Subir lista de errores
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsc-errors-${{ github.ref_name }}
+          path: errors.txt
+          retention-days: 5
