@@ -20,5 +20,8 @@ jobs:
       - run: npm ci && npm i -D @rollup/rollup-linux-x64-gnu
       - name: Production build (gate real del repo)
         run: npm run build
-      - name: Typecheck (informativo: upstream main ya falla en baseline)
-        run: npx tsc --noEmit 2>&1 | tee /tmp/tsc.log; echo "errores totales: $(grep -c 'error TS' /tmp/tsc.log)"; echo "errores en monthly_view: $(grep -c 'monthly_view' /tmp/tsc.log)"; exit 0
+      - name: Typecheck (informativo, comparar contra baseline)
+        run: |
+          npx tsc --noEmit > /tmp/tsc.log 2>&1 || true
+          echo "errores_totales=$(grep -c 'error TS' /tmp/tsc.log || true)"
+          echo "errores_monthly_view=$(grep -c 'monthly_view' /tmp/tsc.log || true)"
